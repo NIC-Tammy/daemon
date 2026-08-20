@@ -1,0 +1,1139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- edited with XML Spy v3.0 NT (http://www.xmlspy.com) by Kevin O'Regan (Baltimore Technologies) -->
+<!--Created for KeyTools Lite Release v5-->
+<!DOCTYPE Policy [
+	<!ELEMENT Policy (SecurityPolicy)>
+	<!ELEMENT SecurityPolicy (PKIEnabledEntitiesPolicy)>
+	<!ATTLIST SecurityPolicy
+	xmlns CDATA #FIXED "http://www.baltimore.com/Policy/SecurityPolicy-20000630"
+>
+	<!ELEMENT PKIEnabledEntitiesPolicy (AdministrativeInformation, PolicyDescription, ListOfPolicyConditions?, PolicyManagementRules, SecureUserCredentialsManagementRules, RemoteSecurityServicesLocatorRules, TrustAndDistrustPointsRules?, CertificateStatusInformationCheckingRules?, GenericSecurityServiceUsageRules, PassphraseRules?, GenericExtensionsRules, SignatureInfo)>
+	<!-- The signature will either be a Signature element from internet draft (see end of DTD for Signature details) or a PKCS7 blob. PKCS7Info is simply a text node with the file name of the P7M. This filename is an optional hint pointer, the application may override it -->
+	<!ELEMENT SignatureInfo (Signature | PKCS7Info)>
+	<!ELEMENT PKCS7Info (#PCDATA)>
+	<!--
+
+PolicyAdministrativeInformation
+
+-->
+	<!ELEMENT AdministrativeInformation (FamilyMembership?, PolicyIssueTime)>
+	<!ATTLIST AdministrativeInformation
+	policyVersion CDATA #REQUIRED
+		dtdSchemaVersion CDATA #REQUIRED
+		policyName CDATA #REQUIRED
+		policyOID CDATA #REQUIRED
+		policyPriorityLevel CDATA #IMPLIED
+>
+	<!ELEMENT FamilyMembership (ParentPolicies, ChildPolicies)>
+	<!ELEMENT ParentPolicies (ParentPolicy*)>
+	<!ELEMENT ChildPolicies (ChildPolicy*)>
+	<!ELEMENT ParentPolicy (#PCDATA)>
+	<!ELEMENT ChildPolicy (#PCDATA)>
+	<!ELEMENT PolicyIssueTime (GeneralisedTimeSimple)>
+	<!-- 
+
+
+
+PolicyDescription
+
+
+
+-->
+	<!ELEMENT PolicyDescription (PolicyScopeStatement, PolicySummary)>
+	<!ELEMENT PolicyScopeStatement (#PCDATA)>
+	<!ELEMENT PolicySummary (#PCDATA)>
+	<!ELEMENT ListOfPolicyConditions (ConditionalExpression*)>
+	<!-- 
+
+
+
+PolicyManagementRules
+
+
+
+-->
+	<!ELEMENT PolicyManagementRules (PolicyManagementRule*)>
+	<!ELEMENT PolicyManagementRule (ConditionalExpressionReference?, ValiditySpecification, RefreshMechanism, PolicyConveyanceToClient?, EmergencyAction?)>
+	<!ELEMENT RefreshMechanism EMPTY>
+	<!ATTLIST RefreshMechanism
+	mechanism (Pull | Push) "Pull"
+>
+	<!-- Intervals in Minutes -->
+	<!ATTLIST RefreshMechanism
+	updateInterval CDATA #REQUIRED
+		spreadInterval CDATA #REQUIRED
+		retryInterval CDATA #IMPLIED
+>
+	<!ELEMENT PolicyConveyanceToClient EMPTY>
+	<!ATTLIST PolicyConveyanceToClient
+	clientAuthentication (Mandatory | Optional) "Mandatory"
+		confidentiality (Mandatory | Optional) "Mandatory"
+>
+	<!ELEMENT EmergencyAction EMPTY>
+	<!ATTLIST EmergencyAction
+	byPassSecurityInCaseOfSevereError (Allowed | NotAllowed | RestrictedOperations) "NotAllowed"
+		gracePeriod CDATA #IMPLIED
+>
+	<!-- 
+
+
+
+Secure User Credential Management Rules
+
+
+
+-->
+	<!ELEMENT SecureUserCredentialsManagementRules (ListOfCertificateRequestTemplates, ListOfRegistrationCriteriaTemplates?, ListOfKeyUpdateRules?, CredentialsInitialisationAndUpdateRules)>
+	<!ELEMENT CredentialsInitialisationAndUpdateRules (InitialCycles, SubsequentCycles?)>
+	<!ELEMENT InitialCycles (InitialCycle*)>
+	<!ELEMENT SubsequentCycles (SubsequentCycle*)>
+	<!-- Each cycle can have multiple keys and associated setup templates-->
+	<!ELEMENT InitialCycle (ConditionalExpressionReference?, PrivateKeySetup+)>
+	<!ATTLIST InitialCycle
+	idfUniqueIdentifier CDATA #IMPLIED
+>
+	<!ELEMENT SubsequentCycle (ConditionalExpressionReference?, UpdatedPrivateKeySetup*)>
+	<!ELEMENT UpdatedPrivateKeySetup (PrivateKeySetup, KeyUpdateRuleReference)>
+	<!ELEMENT PrivateKeySetup (CertificateRequestTemplateReference, KeyProperties, RegistrationCriteriaTemplateReference?, CertificatePublicationRules?, SecurityOfficerSequencingRule?, CASpecificInformation?)>
+	<!--
+
+
+
+Certificate Request Template 
+
+
+
+-->
+	<!ELEMENT ListOfCertificateRequestTemplates (CertificateRequestTemplate*)>
+	<!ELEMENT CertificateRequestTemplateReference EMPTY>
+	<!ATTLIST CertificateRequestTemplateReference
+	pointer IDREF #REQUIRED
+>
+	<!ELEMENT CertificateRequestTemplate (DistinguishedName, ValiditySpecification, SigningAlgorithmToBeUsedByCA?, CertificateExtensions?)>
+	<!ATTLIST CertificateRequestTemplate
+	friendlyName ID #REQUIRED
+>
+	<!ELEMENT DistinguishedName (RDNSequence)>
+	<!ELEMENT RDNSequence (RelativeDistinguishedName*)>
+	<!ELEMENT RelativeDistinguishedName (RDNAttributeTypeAndValue+)>
+	<!ELEMENT RDNAttributeTypeAndValue (RDNAttributeType, AttributeValue, FieldMetaInformation?)>
+	<!-- c=ie, o=baltimore technologies, M= ,123.123.53.545=xyz,  -->
+	<!ELEMENT RDNAttributeType (CommonRDNOID | OID | UnspecifiedOID)>
+	<!ELEMENT UnspecifiedOID (#PCDATA)>
+	<!ELEMENT CommonRDNOID EMPTY>
+	<!ATTLIST CommonRDNOID
+	oid (C | L | O | OU | CN | GN | S | Email | Mail | Phone) #REQUIRED
+>
+	<!ELEMENT AttributeValue (#PCDATA)>
+	<!ATTLIST AttributeValue
+	defaultValue CDATA #IMPLIED
+>
+	<!ELEMENT ValiditySpecification (EarliestDate, LatestDate, NumberOfDays?)>
+	<!ELEMENT EarliestDate (GeneralisedTimeSimple)>
+	<!ATTLIST EarliestDate
+	fixedness (ExactStartDate | Constrained) #REQUIRED
+>
+	<!ELEMENT LatestDate (GeneralisedTimeSimple)>
+	<!ATTLIST LatestDate
+	fixedness (ExactEndDate | Constrained) #REQUIRED
+>
+	<!-- the signing algorithm(s) are those to be used by CA when signing the cert -->
+	<!ELEMENT SigningAlgorithmToBeUsedByCA (SigningAlgorithm*)>
+	<!ELEMENT CertificateExtensions (CertificateExtension*)>
+	<!ELEMENT CertificateExtension (SubjectAlternateNameEmail?, DirectoryAttributePhone?, DirectoryAttributeSurname?, KeyIdentifiers?, BasicConstraints?, NameConstraints?, PolicyConstraints?, AuthorityInformationAccess?, CRLDistributionPoints?, GenericOctetStringExtension?, NetscapeExtensions?, VPNExtensions?)>
+	<!ELEMENT SubjectAlternateNameEmail (ExtensionGenericBits)>
+	<!ATTLIST SubjectAlternateNameEmail
+	subjectAlternateNameEmail CDATA #REQUIRED
+>
+	<!ELEMENT ExtensionGenericBits EMPTY>
+	<!ATTLIST ExtensionGenericBits
+	certificateExtensionOID CDATA #IMPLIED
+		critical (True | False) "False"
+		extensionValue CDATA #IMPLIED
+>
+	<!ELEMENT DirectoryAttributePhone (ExtensionGenericBits)>
+	<!ATTLIST DirectoryAttributePhone
+	dirAttPhone CDATA #IMPLIED
+>
+	<!ELEMENT DirectoryAttributeSurname (ExtensionGenericBits)>
+	<!ATTLIST DirectoryAttributeSurname
+	dirAttSurname CDATA #IMPLIED
+>
+	<!ELEMENT KeyIdentifiers (ExtensionGenericBits)>
+	<!ATTLIST KeyIdentifiers
+	keyIds CDATA #IMPLIED
+>
+	<!ELEMENT BasicConstraints (ExtensionGenericBits)>
+	<!ATTLIST BasicConstraints
+	isTheCertificateofaCA (Y | N) "N"
+		pathLengthConstraint CDATA #IMPLIED
+>
+	<!ELEMENT NameConstraints (ExtensionGenericBits)>
+	<!ELEMENT PolicyConstraints (ExtensionGenericBits)>
+	<!ELEMENT AuthorityInformationAccess (ExtensionGenericBits)>
+	<!ATTLIST AuthorityInformationAccess
+	uriLocationOfInformation CDATA #REQUIRED
+>
+	<!ELEMENT CRLDistributionPoints (DistributionPoint+)>
+	<!ELEMENT DistributionPoint (DistributionPointName?, Reasons?, CRLIssuer?)>
+	<!ELEMENT DistributionPointName (FullName | NameRelativeToCRLIssuer)>
+	<!ELEMENT FullName (GeneralNames)>
+	<!ELEMENT NameRelativeToCRLIssuer (RelativeDistinguishedName)>
+	<!ELEMENT Reasons (ReasonFlags+)>
+	<!ELEMENT ReasonFlags EMPTY>
+	<!ATTLIST ReasonFlags
+	reasonFlags (unused | compromise | CAcompromise | affiliationChanged | superceded | cessationOfOperation | certificateHold) #REQUIRED
+>
+	<!ELEMENT CRLIssuer (GeneralNames)>
+	<!ELEMENT GenericOctetStringExtension (ExtensionGenericBits)>
+	<!-- The following Netscape extensions are not catered for as yet as they are not common: 
+
+netscape-base-url, netscape-revocation-url, netscape-ca-revocation-url, netscape-cert-renewal-url, 
+
+netscape-ca-policy-url, netscape-ssl-server-name, netscape-comment -->
+	<!ELEMENT NetscapeExtensions (NetscapeCertTypeExtension*)>
+	<!ELEMENT NetscapeCertTypeExtension EMPTY>
+	<!ATTLIST NetscapeCertTypeExtension
+	netscapeCertTypeExtension (SSLClient | SSLServer | SMIME | ObjectSigning | SSLCA | SMIMECA | ObjectSigningCA) #REQUIRED
+>
+	<!ELEMENT VPNExtensions (SubjectAlternateNameIPAddress?, SubjectAlternateNameDNSAddress?)>
+	<!ELEMENT SubjectAlternateNameIPAddress EMPTY>
+	<!ATTLIST SubjectAlternateNameIPAddress
+	subjectAlternateNameIPAddress CDATA #REQUIRED
+>
+	<!ELEMENT SubjectAlternateNameDNSAddress EMPTY>
+	<!ATTLIST SubjectAlternateNameDNSAddress
+	subjectAlternateNameDNSAddress CDATA #REQUIRED
+>
+	<!-- Key Properties -->
+	<!ELEMENT KeyProperties (PolicyKeyValue, KeyGenerationAndStorage?, KeyUsages, ExtendedKeyUsages?, ArchiveOfPrivateKey?, PrivateKeyUsagePeriod?)>
+	<!-- key definitions taken from IETF/XML.dsig  -->
+	<!ELEMENT PolicyKeyValue (PolicyRSAKeyValue | PolicyDSAKeyValue)>
+	<!-- The Modulus cannot be centrally constrained  -->
+	<!ELEMENT PolicyRSAKeyValue (PolicyRSAExponent?, RSAKeyAllowedBitLength)>
+	<!ELEMENT RSAKeyAllowedBitLength EMPTY>
+	<!ATTLIST RSAKeyAllowedBitLength
+	keyBitLength (512 | 768 | 1024 | 2048) #IMPLIED
+>
+	<!ELEMENT PolicyRSAExponent (#PCDATA)>
+	<!ELEMENT PolicyDSAKeyValue (PLength, DSACommunity?)>
+	<!ELEMENT PLength EMPTY>
+	<!ATTLIST PLength
+	length (512 | 1024) #REQUIRED
+>
+	<!-- #PCDATA should is a base64 encoded blob -->
+	<!ELEMENT DSACommunity (#PCDATA)>
+	<!ELEMENT KeyGenerationAndStorage (PRNGSeedingChoices, KeyGenerationSources, KeyStorageLocations)>
+	<!ELEMENT PRNGSeedingChoices (SeedingChoice*)>
+	<!ELEMENT SeedingChoice EMPTY>
+	<!ATTLIST SeedingChoice
+	seeding (MouseAndKeys | IntelRNG | ProvidedByToken | FileOfRandomness) #REQUIRED
+>
+	<!ELEMENT KeyGenerationSources (KeyGenerationSource*)>
+	<!ELEMENT KeyGenerationSource EMPTY>
+	<!ATTLIST KeyGenerationSource
+	source (ImportFromFile | SmartCard | LocalSoftwareGeneration | CryptoHSM | CentrallyGenerated) #REQUIRED
+		qualityOfGenerationDemandedByCA CDATA #IMPLIED
+		ruleForPrimeNumberGeneration CDATA #IMPLIED
+>
+	<!ELEMENT KeyStorageLocations (KeyStorageLocation*)>
+	<!ELEMENT KeyStorageLocation EMPTY>
+	<!ATTLIST KeyStorageLocation
+	validKeyGenerationSources (storageSmartCard | cryptoSmartCard | cryptoHSM | softwarePSE) #REQUIRED
+>
+	<!ELEMENT KeyUsages (KeyUsage*)>
+	<!ELEMENT KeyUsage EMPTY>
+	<!ATTLIST KeyUsage
+	keyUsageValue (DigitalSignature | NonRepudiation | DataEncipherment | KeyEncipherment | CRLSigning | KeyAgreement | CertificateSigning) #REQUIRED
+>
+	<!ELEMENT ExtendedKeyUsages (ExtendedKeyUsage*)>
+	<!ELEMENT ExtendedKeyUsage EMPTY>
+	<!--
+
+id-kp-serverAuth      OBJECT IDENTIFIER ::= { id-kp 1 }
+
+id-kp-clientAuth      OBJECT IDENTIFIER ::= { id-kp 2 }
+
+id-kp-codeSigning     OBJECT IDENTIFIER ::= { id-kp 3 }
+
+id-kp-emailProtection OBJECT IDENTIFIER ::= { id-kp 4 }
+
+id-kp-ipsecEndSystem  OBJECT IDENTIFIER ::= { id-kp 5 }
+
+id-kp-ipsecTunnel     OBJECT IDENTIFIER ::= { id-kp 6 }
+
+id-kp-ipsecUser       OBJECT IDENTIFIER ::= { id-kp 7 }
+
+id-kp-timeStamping    OBJECT IDENTIFIER ::= { id-kp 8 } -->
+	<!ATTLIST ExtendedKeyUsage
+	extendedKeyUsageValue (ServerAuthentication | ClientAuthentication | CodeSigning | EmailProtection | IPSECEndSystem | IPSECTunnel | IPSECUser | TimeStamping | OCSPServer | CertificateTrustListSigning | MicrosoftServerGatedCrypto | EncryptedFileSystem | NetscapeServerGatedCrypto) #IMPLIED
+>
+	<!ELEMENT ArchiveOfPrivateKey EMPTY>
+	<!ELEMENT PrivateKeyUsagePeriod (ValiditySpecification)>
+	<!ELEMENT ListOfKeyUpdateRules (KeyUpdateRule*)>
+	<!ELEMENT KeyUpdateRuleReference EMPTY>
+	<!ATTLIST KeyUpdateRuleReference
+	pointer IDREF #REQUIRED
+>
+	<!ELEMENT KeyUpdateRule (EntityEarlyWarningInterval, HowLongBeforeCertificateExpiryToCertifyOrRecertifyKey, KeyUpdateCheckingIntervalWhenPolicyLoaded, HowLongBeforeKeyExpiryToActivateNewKey)>
+	<!--  certificate lifetime must be shorter than key lifetime, key could be longer but not  necessarily long enough if not enought life left in it a new key should be generated Or if the rule says generate a new one then this should be done anyway - I would expect this to be the norm -->
+	<!ATTLIST KeyUpdateRule
+	interactionWithEntity (nonInteractiveTransparentUpdate | fullInteractiveReRegistration | deltaInteractiveReRegistration) "nonInteractiveTransparentUpdate"
+		newKeyOrRecertifyCurrentKey (generateNewKey | RecertifyNewKeyIfStillPossible) "generateNewKey"
+		friendlyName ID #REQUIRED
+>
+	<!ELEMENT EntityEarlyWarningInterval (GenericInterval, EarlyWarningNotifications)>
+	<!ELEMENT HowLongBeforeCertificateExpiryToCertifyOrRecertifyKey (GenericInterval, NumberOfDays, KeyUpdateProblemNotifications)>
+	<!ELEMENT KeyUpdateCheckingIntervalWhenPolicyLoaded (GenericInterval)>
+	<!ELEMENT HowLongBeforeKeyExpiryToActivateNewKey (GenericInterval, NewKeyActivatedNotification)>
+	<!ELEMENT GenericInterval (NumberOfDays | NumberOfHours | NumberOfMinutes | NumberOfSeconds)>
+	<!ELEMENT NumberOfDays EMPTY>
+	<!ATTLIST NumberOfDays
+	number CDATA #REQUIRED
+>
+	<!ELEMENT NumberOfHours EMPTY>
+	<!ATTLIST NumberOfHours
+	number CDATA #REQUIRED
+>
+	<!ELEMENT NumberOfMinutes EMPTY>
+	<!ATTLIST NumberOfMinutes
+	number CDATA #REQUIRED
+>
+	<!ELEMENT NumberOfSeconds EMPTY>
+	<!ATTLIST NumberOfSeconds
+	number CDATA #REQUIRED
+>
+	<!ELEMENT EarlyWarningNotifications (EmailNotifications)>
+	<!ELEMENT KeyUpdateProblemNotifications (EmailNotifications)>
+	<!ELEMENT NewKeyActivatedNotification (EmailNotifications)>
+	<!ELEMENT EmailNotifications (EmailToEndUser?, EmailToGuardians?)>
+	<!ELEMENT EmailToEndUser (SMSInformation?)>
+	<!ATTLIST EmailToEndUser
+	emailRequired (Y | N) "Y"
+>
+	<!ELEMENT SMSInformation EMPTY>
+	<!ATTLIST SMSInformation
+	cellphoneNumber CDATA #REQUIRED
+		emailToSMSGatewayHost CDATA #IMPLIED
+>
+	<!ELEMENT EmailToGuardians (GuardianInformation*)>
+	<!ELEMENT GuardianInformation EMPTY>
+	<!ATTLIST GuardianInformation
+	emailAddress CDATA #REQUIRED
+		name CDATA #IMPLIED
+		phoneNumber CDATA #IMPLIED
+>
+	<!ELEMENT CertificateRevocationRule (EndUserRevocation, RAOperatorRevocation, CAOperatorRevocation)>
+	<!ELEMENT EndUserRevocation EMPTY>
+	<!ATTLIST EndUserRevocation
+	allowed (Y | N) "N"
+		passphrase CDATA #IMPLIED
+>
+	<!ELEMENT RAOperatorRevocation (SecurityOfficerSequencingRule?)>
+	<!ATTLIST RAOperatorRevocation
+	allowed (Y | N) "N"
+>
+	<!ELEMENT CAOperatorRevocation (SecurityOfficerSequencingRule?)>
+	<!ATTLIST CAOperatorRevocation
+	allowed (Y | N) "N"
+>
+	<!ELEMENT ListOfRegistrationCriteriaTemplates (RegistrationCriteriaTemplate*)>
+	<!ELEMENT RegistrationCriteriaTemplateReference EMPTY>
+	<!ATTLIST RegistrationCriteriaTemplateReference
+	pointer IDREF #REQUIRED
+>
+	<!ELEMENT RegistrationCriteriaTemplate (RegistrationCriterion*)>
+	<!ATTLIST RegistrationCriteriaTemplate
+	includeFingerprintOfEndEntityPublicKey (Y | N) "Y"
+		friendlyName ID #REQUIRED
+>
+	<!ELEMENT RegistrationCriterion (FieldMetaInformation, PublishRegistrationItemToDirectories)>
+	<!ELEMENT PublishRegistrationItemToDirectories EMPTY>
+	<!ATTLIST PublishRegistrationItemToDirectories
+	yesOrNo (Y | N) "N"
+>
+	<!ELEMENT CertificatePublicationRules (CertificatePublicationRule*)>
+	<!ELEMENT CertificatePublicationRule (ConditionalExpressionReference?, DirectoryLocator, PublicationRule?)>
+	<!ELEMENT PublicationRule (WhatToPublish)>
+	<!ATTLIST PublicationRule
+	whenToPublish (afterProduction | afterCASendsToRA | afterUserConfirmsReceipt) "afterProduction"
+		whereToPublishInSchema CDATA #IMPLIED
+>
+	<!ELEMENT WhatToPublish EMPTY>
+	<!ATTLIST WhatToPublish
+	publishCertificate (Y | N) "Y"
+		publishDirectoryAttributes (Y | N) "Y"
+>
+	<!ELEMENT SecurityOfficerSequencingRule (ProcessingOrderSpecifications | SequenceOfOperatorsDerivedFromRules)>
+	<!ELEMENT ProcessingOrderSpecifications (ProcessingOrderSpecification*)>
+	<!ATTLIST SecurityOfficerSequencingRule
+	numberOfOperatorsRequiredToApprove CDATA #IMPLIED
+>
+	<!ELEMENT ProcessingOrderSpecification (ProcessingOrderNumber, OperatorCertificate)>
+	<!ELEMENT ProcessingOrderNumber EMPTY>
+	<!ATTLIST ProcessingOrderNumber
+	pon CDATA #REQUIRED
+>
+	<!ELEMENT OperatorCertificate EMPTY>
+	<!ATTLIST OperatorCertificate
+	certificate CDATA #REQUIRED
+>
+	<!ELEMENT SequenceOfOperatorsDerivedFromRules (SecurityOfficerRuleDerivedEntry*)>
+	<!ELEMENT SecurityOfficerRuleDerivedEntry (ProcessingOrderNumber, ConditionalExpressionReference)>
+	<!ELEMENT CASpecificInformation (IssuerInformation?, CertificateSerialNumber?, AuthorityKeyIdentifier?)>
+	<!ELEMENT IssuerInformation EMPTY>
+	<!ELEMENT CertificateSerialNumber EMPTY>
+	<!ELEMENT AuthorityKeyIdentifier EMPTY>
+	<!-- 
+
+
+
+RemoteSecurityServicesLocator
+
+
+
+-->
+	<!ELEMENT RemoteSecurityServicesLocatorRules (RemoteSecurityServicesLocatorRule*)>
+	<!ELEMENT RemoteSecurityServicesLocatorRule (ConditionalExpressionReference?, RemoteSecurityServicesLocatorBody)>
+	<!ELEMENT RemoteSecurityServicesLocatorBody (PSLocator, PKILocator, OCSPLocator, DirectoryLocator, ArchiveLocator, TSALocator, ACSLocator)>
+	<!ELEMENT PSLocator (SecurityServicesLocator*)>
+	<!ELEMENT PKILocator (SecurityServicesLocator*)>
+	<!ELEMENT OCSPLocator (SecurityServicesLocator*)>
+	<!ELEMENT ArchiveLocator (SecurityServicesLocator*)>
+	<!ELEMENT DirectoryLocator (SecurityServicesLocator*)>
+	<!ELEMENT TSALocator (SecurityServicesLocator*)>
+	<!ELEMENT ACSLocator (SecurityServicesLocator*)>
+	<!ELEMENT SecurityServicesLocator (URL)>
+	<!ATTLIST SecurityServicesLocator
+	servicePriority CDATA #IMPLIED
+>
+	<!ELEMENT URL EMPTY>
+	<!ATTLIST URL
+	url CDATA #REQUIRED
+>
+	<!--
+
+
+
+TrustPoints
+
+
+
+-->
+	<!ELEMENT TrustAndDistrustPointsRules (TrustAndDistrustPointsRule*)>
+	<!ELEMENT TrustAndDistrustPointsRule (ConditionalExpressionReference?, EntitiesToTrust, EntitiesToNotTrust)>
+	<!ELEMENT EntitiesToTrust (EntityDetails*)>
+	<!ELEMENT EntitiesToNotTrust (EntityDetails*)>
+	<!ELEMENT EntityDetails ((EntityCertificate | PartOfEntityCertificate | URIToCertificate), IssuerOfCertificatesFor)>
+	<!ATTLIST EntityDetails
+	entityType CDATA #REQUIRED
+>
+	<!ELEMENT IssuerOfCertificatesFor (IssuerOf*)>
+	<!ELEMENT IssuerOf EMPTY>
+	<!ATTLIST IssuerOf
+	certificatesFor (SoftwarePublishing | SecureEmail | NetworkServerAuthentication | NetworkClientAuthentication | Any | NotApplicable) #REQUIRED
+>
+	<!ELEMENT EntityCertificate (#PCDATA)>
+	<!ELEMENT PartOfEntityCertificate (FingerPrint, DistinguishedName?)>
+	<!ATTLIST PartOfEntityCertificate
+	serialNumber CDATA #IMPLIED
+>
+	<!ELEMENT FingerPrint EMPTY>
+	<!ATTLIST FingerPrint
+	hashOfEntityCertificate CDATA #REQUIRED
+		hashAlgorithmUsed CDATA #REQUIRED
+>
+	<!ELEMENT URIToCertificate (#PCDATA)>
+	<!--
+
+
+
+CertificateStatusInformationCheckingRules
+
+
+
+ -->
+	<!ELEMENT CertificateStatusInformationCheckingRules (CertificateStatusInformationCheckingRule*)>
+	<!ELEMENT CertificateStatusInformationCheckingRule (ConditionalExpressionReference?, CertificateStatusInformationCheckingBody)>
+	<!ELEMENT CertificateStatusInformationCheckingBody (OCSPStatementOfUsage?, DirectoryStatementOfUsage?)>
+	<!ATTLIST CertificateStatusInformationCheckingBody
+	numberOfServersToPoll CDATA #REQUIRED
+		whatToDoWhenOffNet (stopWorking | SkipCertificateValidation) "SkipCertificateValidation"
+>
+	<!ELEMENT OCSPStatementOfUsage EMPTY>
+	<!ATTLIST OCSPStatementOfUsage
+	minimumFreshnessOfStatusInfoPermitted CDATA #REQUIRED
+>
+	<!ELEMENT DirectoryStatementOfUsage EMPTY>
+	<!ATTLIST DirectoryStatementOfUsage
+	localCRLCachingAllowed (Y | N) "Y"
+		Z CDATA #IMPLIED
+>
+	<!-- 
+
+
+
+GenericSecurityServiceUsageRules
+
+
+
+-->
+	<!ELEMENT GenericSecurityServiceUsageRules (GenericSecurityServiceUsageRule*)>
+	<!ELEMENT GenericSecurityServiceUsageRule (ConditionalExpressionReference?, GenericSecurityServiceUsageBody)>
+	<!ELEMENT GenericSecurityServiceUsageBody (ConfidentialityServiceUsageRule, KeyWrappingServiceUsageRule, AuthenticationServiceUsageRule, SigningServiceUsageRule, InteractionWithUserRule?, PRNGReseedingRule?, AuditAndLogRule?, TimeStampingRule?)>
+	<!-- 
+
+	Confidentiality Rule
+
+-->
+	<!ELEMENT ConfidentialityServiceUsageRule (EncryptionServiceList, DecryptionServiceList)>
+	<!ATTLIST ConfidentialityServiceUsageRule
+	doEncrypt (Always | Never) #IMPLIED
+>
+	<!ELEMENT EncryptionServiceList (SymmetricAlgorithm*)>
+	<!ELEMENT DecryptionServiceList (SymmetricAlgorithm*)>
+	<!ELEMENT SymmetricAlgorithm (OID)>
+	<!-- 
+
+	KeyWrapping Rule
+
+-->
+	<!ELEMENT KeyWrappingServiceUsageRule (KeyWrappingAlgorithmList, KeyUnwrappingAlgorithmList)>
+	<!ATTLIST KeyWrappingServiceUsageRule
+	minimumLengthOfPeersPublicKey CDATA #IMPLIED
+>
+	<!ELEMENT KeyWrappingAlgorithmList (KeyWrappingAlgorithm*)>
+	<!ELEMENT KeyWrappingAlgorithm (OID)>
+	<!-- 
+
+	KeyUnrapping Rule
+
+-->
+	<!ELEMENT KeyUnwrappingAlgorithmList (KeyWrappingAlgorithm*)>
+	<!-- 
+
+	Authentication Rule
+
+-->
+	<!ELEMENT AuthenticationServiceUsageRule (EndEntityToAnotherEntity, AnotherEntityToEndEntity)>
+	<!ELEMENT EndEntityToAnotherEntity (AuthenticationAlgorithm*)>
+	<!ELEMENT AnotherEntityToEndEntity (AuthenticationAlgorithm*)>
+	<!ELEMENT AuthenticationAlgorithm (OID)>
+	<!-- 
+
+	Signing Rule
+
+-->
+	<!ELEMENT SigningServiceUsageRule (SigningAlgorithmsList, VerifyingAlgorithmsList)>
+	<!ATTLIST SigningServiceUsageRule
+	includeTimeOfSigning (Y | N) #IMPLIED
+		whenSigningOnly (DataNotInSignature_Detached_Transparent | EmbedDataInPKCS7Signature_Opaque) "DataNotInSignature_Detached_Transparent"
+		whenEncryptingAsWell (EncryptThenSign_EnvelopedData | SignThenEncrypt_SignedAndEnvelopedData) "SignThenEncrypt_SignedAndEnvelopedData"
+		doSign (Always | Never) #IMPLIED
+>
+	<!ELEMENT SigningAlgorithmsList (SigningAlgorithm*)>
+	<!ELEMENT VerifyingAlgorithmsList (SigningAlgorithm*)>
+	<!ELEMENT SigningAlgorithm (OID)>
+	<!-- each of the attributes below is given layman names as well as its PKCS#7 name to make them more understandable separated by '_'  -->
+	<!-- 
+
+	Interation With User Rule 
+
+-->
+	<!ELEMENT InteractionWithUserRule EMPTY>
+	<!ATTLIST InteractionWithUserRule
+	notifyOfSuccessfulSignatureVerifications (Y | N) "Y"
+		notifyWhenSignedDataReceivedFromUntrustedCAIssuer (Y | N) "Y"
+		enableAcceptanceOfDataReceivedFromUntrustedCAIssuer (Y | N) "Y"
+		informWhenClientCertBeingUsed (Y | N) "N"
+>
+	<!-- 
+
+	PRNG Reseeding Rule
+
+-->
+	<!ELEMENT PRNGReseedingRule (SeedingChoice*)>
+	<!ATTLIST PRNGReseedingRule
+	periodOfReseeding CDATA #IMPLIED
+>
+	<!-- 
+
+	Audit And Log Rule 
+
+-->
+	<!ELEMENT AuditAndLogRule EMPTY>
+	<!ATTLIST AuditAndLogRule
+	auditLevel CDATA #REQUIRED
+>
+	<!-- 
+
+	Time Stamping Rule, needs input from Timestamping group
+
+-->
+	<!ELEMENT TimeStampingRule EMPTY>
+	<!-- 
+
+
+
+Passphrase Rules
+
+
+
+-->
+	<!ELEMENT PassphraseRules (PassphraseRule*)>
+	<!ELEMENT PassphraseRule (ConditionalExpressionReference?)>
+	<!ATTLIST PassphraseRule
+	passphrasePromptingRule (EachTimePrivateKeyInvoked | afterNUsesOfThePrivateKey | AfterNMinutes) "EachTimePrivateKeyInvoked"
+		minimumLength CDATA #REQUIRED
+		maximumLength CDATA #IMPLIED
+		minimumNumberOfUppertcase CDATA #REQUIRED
+		minimumNumberOfLowertcase CDATA #REQUIRED
+		minimumNumberOfDigits CDATA #REQUIRED
+		maximumNumberOfDigits CDATA #IMPLIED
+		percentageDissimilaritytoPreviousPasswords CDATA #IMPLIED
+		renewalInterval CDATA #REQUIRED
+>
+	<!-- 
+
+
+
+This is a table of arbitrary 3-tuples that enable the addition of arbitrary extensions without modification to the PAO or PA.  
+
+This is analogous to X.509 generic extensions and can hence be considered to be application independent 
+
+
+
+-->
+	<!ELEMENT GenericExtensionsRules (GenericExtensionsRule*)>
+	<!ELEMENT GenericExtensionsRule (ConditionalExpressionReference?, TableOfEntries)>
+	<!ELEMENT TableOfEntries (Entry*)>
+	<!ELEMENT Entry (SetOfValues)>
+	<!ATTLIST Entry
+	customPolicyExtensionOID CDATA #REQUIRED
+		extensionName CDATA #REQUIRED
+>
+	<!ELEMENT SetOfValues (DateSet | IntegerSet | StringSet)>
+	<!ELEMENT DateSet (DateSpecification, DateRange)>
+	<!ELEMENT DateSpecification (GeneralisedTimeSimple)*>
+	<!ELEMENT DateRange (MinimumDate?, MaximumDate?)>
+	<!ELEMENT MinimumDate (GeneralisedTimeSimple)>
+	<!ELEMENT MaximumDate (GeneralisedTimeSimple)>
+	<!ELEMENT IntegerSet (IntegerSpecification, IntegerRange)>
+	<!ELEMENT IntegerSpecification (Integer*)>
+	<!ELEMENT Integer EMPTY>
+	<!ATTLIST Integer
+	integerValue CDATA #REQUIRED
+>
+	<!ELEMENT IntegerRange EMPTY>
+	<!ATTLIST IntegerRange
+	minimumInteger CDATA #IMPLIED
+		maximumInteger CDATA #IMPLIED
+>
+	<!ELEMENT StringSet (StringSpecification, StringRange)>
+	<!ELEMENT StringSpecification (String*)>
+	<!ELEMENT String EMPTY>
+	<!ATTLIST String
+	stringValue CDATA #REQUIRED
+>
+	<!ELEMENT StringRange EMPTY>
+	<!ATTLIST StringRange
+	minimumString CDATA #IMPLIED
+		maximumString CDATA #IMPLIED
+>
+	<!-- 
+
+
+
+ASN.1 BASIC TYPES 
+
+
+
+-->
+	<!ELEMENT Any (#PCDATA)>
+	<!ELEMENT OID EMPTY>
+	<!ATTLIST OID
+	oid CDATA #REQUIRED
+>
+	<!ELEMENT GeneralNames (GeneralName+)>
+	<!ELEMENT GeneralName (OtherName | RFC822Name | DNSName | X400Address | DirectoryName | EDIPartyName | UniformResourceIdentifier | IPAddress | RegisteredID)>
+	<!ELEMENT OtherName (OtherNameTypeID, OtherNameValue)>
+	<!ELEMENT OtherNameTypeID (OID)>
+	<!ELEMENT OtherNameValue (#PCDATA)>
+	<!ELEMENT RFC822Name (IA5String)>
+	<!ELEMENT IA5String (#PCDATA)>
+	<!ELEMENT DNSName (IA5String)>
+	<!ELEMENT X400Address (ORAddress)>
+	<!ELEMENT ORAddress (#PCDATA)>
+	<!ELEMENT DirectoryName (DistinguishedName)>
+	<!ELEMENT EDIPartyName (#PCDATA)>
+	<!ELEMENT UniformResourceIdentifier (IA5String)>
+	<!ELEMENT IPAddress (OctetString)>
+	<!ELEMENT OctetString (#PCDATA)>
+	<!ELEMENT RegisteredID (OID)>
+	<!-- 
+
+
+
+GENERALISED TIME 
+
+
+
+-->
+	<!ELEMENT GeneralisedTimeSimple EMPTY>
+	<!ATTLIST GeneralisedTimeSimple
+	dateTimeString CDATA #REQUIRED
+>
+	<!-- 
+
+
+
+CONDITIONAL EXPRESSIONS 
+
+
+
+-->
+	<!ELEMENT ConditionalExpression (SimpleArgument | RecursiveConditionalExpression)>
+	<!ATTLIST ConditionalExpression
+	friendlyName ID #REQUIRED
+>
+	<!ELEMENT RecursiveConditionalExpression (LogicalOperator, ConditionalExpression+)>
+	<!ELEMENT LogicalOperator EMPTY>
+	<!ATTLIST LogicalOperator
+	operatorName (And | Or) "Or"
+>
+	<!ELEMENT SimpleArgument (RDNArgument | CertificateExtensionArgument | HoursOfDayArgument | DaysOfWeekArgument | MonthsOfYearArgument | DateSet | UnknownAttributeArgument)>
+	<!-- Or, RDN OU contains Dev, RDN OU contains marketing; and, RDN contains baltimore -->
+	<!ELEMENT RDNArgument (RDNAttributeType, RDNRelationalOperator, (IntegerSet | StringSet))>
+	<!-- see end of the DTD for the definition of 'SetOfValues' element -->
+	<!ELEMENT RDNRelationalOperator EMPTY>
+	<!ATTLIST RDNRelationalOperator
+	name (contains | startsWith | endsWith | doesNotContain | equals | notEquals) "contains"
+>
+	<!ELEMENT CertificateExtensionArgument (CertificateExtensionName, CertificateExtensionRelationalOperator, (IntegerSet | StringSet))>
+	<!ELEMENT CertificateExtensionName EMPTY>
+	<!ATTLIST CertificateExtensionName
+	name (SubjectAlternateNameEmail | DirectoryAttributePhone | DirectoryAttributeSurname | KeyIdentifiers | BasicConstraints | NameConstraints | PolicyConstraints | AuthorityInformationAccess | CRLDistributionPoints | GenericOctetStingExtension | NetscapeExtensions | VPNExtensions) "SubjectAlternateNameEmail"
+>
+	<!ELEMENT CertificateExtensionRelationalOperator EMPTY>
+	<!ATTLIST CertificateExtensionRelationalOperator
+	name (contains | doesNotContain | equals | notEquals | lessThan | greaterThan | greaterThanOrEquals | lessThanOrEquals) "contains"
+>
+	<!ELEMENT HoursOfDayArgument (FromTime, ToTime)>
+	<!ELEMENT FromTime (Hours, Minutes)>
+	<!ELEMENT ToTime (Hours, Minutes)>
+	<!ELEMENT DaysOfWeekArgument (DayOfWeek+)>
+	<!ELEMENT DayOfWeek EMPTY>
+	<!ATTLIST DayOfWeek
+	dayName (Monday | Tuesday | Wednesday | Thursday | Friday | Saturday | Sunday | AnyDay) "AnyDay"
+>
+	<!ELEMENT MonthsOfYearArgument (MonthOfYear+)>
+	<!ELEMENT MonthOfYear EMPTY>
+	<!ATTLIST MonthOfYear
+	monthName (January | February | March | April | May | June | July | August | September | October | November | December | AnyMonth) "AnyMonth"
+>
+	<!ELEMENT UnknownAttributeArgument (UnknownAttribute, RelationalOperator, SetOfValues)>
+	<!ELEMENT UnknownAttribute EMPTY>
+	<!ATTLIST UnknownAttribute
+	name CDATA #REQUIRED
+>
+	<!ELEMENT RelationalOperator EMPTY>
+	<!ATTLIST RelationalOperator
+	name (contains | doesNotContain | equals | notEquals | lessThan | greaterThan | greaterThanOrEquals | lessThanOrEquals) "contains"
+>
+	<!ELEMENT ConditionalExpressionReference EMPTY>
+	<!ATTLIST ConditionalExpressionReference
+	pointer IDREF #REQUIRED
+>
+	<!ELEMENT Hours EMPTY>
+	<!ATTLIST Hours
+	hh (00 | 01 | 02 | 03 | 04 | 05 | 06 | 07 | 08 | 09 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23) "00"
+>
+	<!ELEMENT Minutes EMPTY>
+	<!ATTLIST Minutes
+	mm (00 | 01 | 02 | 03 | 04 | 05 | 06 | 07 | 08 | 09 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30 | 31 | 32 | 33 | 34 | 35 | 36 | 37 | 38 | 39 | 40 | 41 | 42 | 43 | 44 | 45 | 46 | 47 | 48 | 49 | 50 | 51 | 52 | 53 | 54 | 55 | 56 | 57 | 58 | 59) "00"
+>
+	<!-- 
+
+
+
+FIELD META INFORMATION 
+
+
+
+-->
+	<!ELEMENT FieldMetaInformation (GenericPresentationAspects?, WindowsUISpecifics?, WebUISpecifics?, PalmtopUISpecifics?, MobilephoneUISpecifics?, TVUISpecifics?)>
+	<!ATTLIST FieldMetaInformation
+	maxLength CDATA #IMPLIED
+		defaultValue CDATA #IMPLIED
+		editability (Fixed | Editable) "Editable"
+		displayName CDATA #IMPLIED
+		storageName CDATA #IMPLIED
+		dataPatternRestrictor CDATA #IMPLIED
+>
+	<!ELEMENT GenericPresentationAspects EMPTY>
+	<!ATTLIST GenericPresentationAspects
+	bestPresentedAs (Simple | Button | EditBox | TextBox | CheckBox | Radio | ComboBox | ListBox | DFrame | FixedButton | ActionButton | PKI) "Simple"
+		topLeftXCoord CDATA #IMPLIED
+		topLeftYCoord CDATA #IMPLIED
+		bottomRightXCoord CDATA #IMPLIED
+		bottomRightYCoord CDATA #IMPLIED
+		displayTextValue CDATA #IMPLIED
+		singleOrMultiValued (SingleValued | MultiValued) "SingleValued"
+		multiSelectElement (Y | N) "N"
+		isAPasswordField (Y | N) "N"
+>
+	<!ELEMENT WindowsUISpecifics EMPTY>
+	<!ATTLIST WindowsUISpecifics
+	linkIDs CDATA #REQUIRED
+		resourceHandle CDATA #REQUIRED
+>
+	<!ELEMENT WebUISpecifics EMPTY>
+	<!ELEMENT PalmtopUISpecifics EMPTY>
+	<!ELEMENT TVUISpecifics EMPTY>
+	<!ELEMENT MobilephoneUISpecifics EMPTY>
+	<!-- DTD for XML Signatures      http://www.w3.org/2000/07/xmldsig# -->
+	<!ELEMENT Signature (SignedInfo, SignatureValue, KeyInfo?, Object*)>
+	<!ATTLIST Signature
+	xmlns CDATA #FIXED "http://www.w3.org/2000/07/xmldsig#"
+		Id ID #IMPLIED
+>
+	<!ELEMENT SignatureValue (#PCDATA)>
+	<!ELEMENT SignedInfo (CanonicalizationMethod, SignatureMethod, Reference+)>
+	<!ATTLIST SignedInfo
+	Id ID #IMPLIED
+>
+	<!ELEMENT CanonicalizationMethod (#PCDATA | HMACOutputLength)*>
+	<!ATTLIST CanonicalizationMethod
+	Algorithm CDATA #REQUIRED
+>
+	<!ELEMENT SignatureMethod (#PCDATA | HMACOutputLength)*>
+	<!ATTLIST SignatureMethod
+	Algorithm CDATA #REQUIRED
+>
+	<!ELEMENT Reference (Transforms?, DigestMethod, DigestValue)>
+	<!ATTLIST Reference
+	Id ID #IMPLIED
+		URI CDATA #IMPLIED
+		Type CDATA #IMPLIED
+>
+	<!ELEMENT Transforms (Transform+)>
+	<!ELEMENT Transform (#PCDATA | XPath | XSLT)*>
+	<!ATTLIST Transform
+	Algorithm CDATA #REQUIRED
+>
+	<!ELEMENT XPath (#PCDATA)>
+	<!ELEMENT XSLT (#PCDATA)>
+	<!ELEMENT DigestMethod (#PCDATA | HMACOutputLength)*>
+	<!ATTLIST DigestMethod
+	Algorithm CDATA #REQUIRED
+>
+	<!ELEMENT DigestValue (#PCDATA)>
+	<!ELEMENT KeyInfo (#PCDATA | KeyName | KeyValue | RetrievalMethod | X509Data | PGPData | MgmtData | DSAKeyValue | RSAKeyValue)*>
+	<!ATTLIST KeyInfo
+	Id ID #IMPLIED
+>
+	<!-- Key Information -->
+	<!ELEMENT KeyName (#PCDATA | KeyName | KeyValue | RetrievalMethod | X509Data | PGPData | MgmtData | DSAKeyValue | RSAKeyValue)*>
+	<!ELEMENT KeyValue (#PCDATA | KeyName | KeyValue | RetrievalMethod | X509Data | PGPData | MgmtData | DSAKeyValue | RSAKeyValue)*>
+	<!ELEMENT RetrievalMethod (#PCDATA | KeyName | KeyValue | RetrievalMethod | X509Data | PGPData | MgmtData | DSAKeyValue | RSAKeyValue)*>
+	<!ELEMENT MgmtData (#PCDATA | KeyName | KeyValue | RetrievalMethod | X509Data | PGPData | MgmtData | DSAKeyValue | RSAKeyValue)*>
+	<!-- X.509 Data -->
+	<!ELEMENT X509Data ((X509IssuerSerial | X509SKI | X509SubjectName), X509Certificate*, X509CRL*)>
+	<!ELEMENT X509IssuerSerial (X509IssuerName, X509SerialNumber)>
+	<!ELEMENT X509IssuerName (#PCDATA)>
+	<!ELEMENT X509SubjectName (#PCDATA)>
+	<!ELEMENT X509SerialNumber (#PCDATA)>
+	<!ELEMENT X509SKI (#PCDATA)>
+	<!ELEMENT X509Certificate (#PCDATA)>
+	<!ELEMENT X509CRL (#PCDATA)>
+	<!-- X.509 Data -->
+	<!ELEMENT PGPData (PGPKeyID, PGPKeyPacket?)>
+	<!ELEMENT PGPKeyPacket (#PCDATA)>
+	<!ELEMENT PGPKeyID (#PCDATA)>
+	<!-- Extensible Content -->
+	<!ELEMENT Object (#PCDATA | Signature | SignatureProperties | Manifest)*>
+	<!ATTLIST Object
+	Id ID #IMPLIED
+		MimeType CDATA #IMPLIED
+		Encoding CDATA #IMPLIED
+>
+	<!ELEMENT Manifest (Reference+)>
+	<!ATTLIST Manifest
+	Id ID #IMPLIED
+>
+	<!ELEMENT SignatureProperties (SignatureProperty+)>
+	<!ATTLIST SignatureProperties
+	Id ID #IMPLIED
+>
+	<!ELEMENT SignatureProperty (#PCDATA | Signature | SignatureProperties | Manifest)*>
+	<!ATTLIST SignatureProperty
+	Target CDATA #REQUIRED
+		Id ID #IMPLIED
+>
+	<!-- Algorithm Parameters -->
+	<!ELEMENT HMACOutputLength (#PCDATA)>
+	<!ELEMENT DSAKeyValue (P, Q, G, Y, J?, (Seed, PgenCounter)?)>
+	<!ELEMENT P (#PCDATA)>
+	<!ELEMENT Q (#PCDATA)>
+	<!ELEMENT G (#PCDATA)>
+	<!ELEMENT Y (#PCDATA)>
+	<!ELEMENT J (#PCDATA)>
+	<!ELEMENT Seed (#PCDATA)>
+	<!ELEMENT PgenCounter (#PCDATA)>
+	<!ELEMENT RSAKeyValue (Modulus, Exponent)>
+	<!ELEMENT Modulus (#PCDATA)>
+	<!ELEMENT Exponent (#PCDATA)>
+]>
+<!-- 
+This XML file contains default behaviors for creating two types of PKI 
+certificates for use with Datatel products including, but not limited 
+to, DMI, SAValet, and WebAdvisor.  The main function of this file is to 
+configure SecuritySmith to create the correct type of certificate requests
+that can be sent to a certificate authority to create a certificate 
+trusted by that CA.  
+	
+At present, only server certificates are supported.  In the future, client
+certificates will be supported.	There are two sections of information 
+contained in this document that controls how keys are created.  One	
+section determines what type of private/public keys to create and another
+section determines which algorithm to use for signing the certificate request.
+	
+The policy file contains two different configurations for client and 
+server certificates.  The infomation that controls how client 
+certificates should be created uses a "friendlyName" of 
+"ClientCertRequestTemplate".  A search through the document will yield
+results of xml element nodes called CertificateRequestTemplate and 
+CertificateRequestTemplateReference.  The first element 
+CertificateRequestTemplate controls which signing algorithm to use on 
+the certificate request.  The second element, 
+CertificateRequestTemplateReference, controls which type of encryption 
+algorithm to use to create the public/private key combination.
+	
+The information that controls how server certificates should be created 
+uses a "friendlyName" of "ServerCertRequestTemplate".  
+
+This file is currently setup to use the following algorithms:
+
+"ServerCertRequestTemplate" : 1024-bit SHA1withRSA
+"ClientCertRequestTemplate" : 1024-bit SHA1withRSA
+
+Clients are encouranged to only change the strength of the algorithm SHA1withRSA
+if a strength other than 1024 is required.
+	
+Comments exist at critical sections of the xml document to describe how to 
+change the default behavior for	client or server certificates. 
+-->
+<Policy>
+	<SecurityPolicy xmlns="http://www.baltimore.com/Policy/SecurityPolicy-20000630">
+		<PKIEnabledEntitiesPolicy>
+			<AdministrativeInformation policyOID="1.2.372.980001.8.2.345" policyName="Datatel Baltimore Policy" policyVersion="2" dtdSchemaVersion="1061">
+				<PolicyIssueTime>
+					<GeneralisedTimeSimple dateTimeString="20000719130835Z"/>
+				</PolicyIssueTime>
+			</AdministrativeInformation>
+			<PolicyDescription>
+				<PolicyScopeStatement>This policy configures Datatel's server and client certificates.</PolicyScopeStatement>
+				<PolicySummary>This policy is used to create server and client certificates for Datatel's products.</PolicySummary>
+			</PolicyDescription>
+			<PolicyManagementRules>
+				<PolicyManagementRule>
+					<ValiditySpecification>
+						<EarliestDate fixedness="Constrained">
+							<GeneralisedTimeSimple dateTimeString=""/>
+						</EarliestDate>
+						<LatestDate fixedness="Constrained">
+							<GeneralisedTimeSimple dateTimeString=""/>
+						</LatestDate>
+						<NumberOfDays number="365"/>
+					</ValiditySpecification>
+					<RefreshMechanism mechanism="Pull" spreadInterval="5040" updateInterval="10080"/>
+					<PolicyConveyanceToClient confidentiality="Optional" clientAuthentication="Mandatory"/>
+					<EmergencyAction byPassSecurityInCaseOfSevereError="Allowed"/>
+				</PolicyManagementRule>
+			</PolicyManagementRules>
+			<SecureUserCredentialsManagementRules>
+				<ListOfCertificateRequestTemplates>
+					<CertificateRequestTemplate friendlyName="ServerCertRequestTemplate">
+						<DistinguishedName>
+							<RDNSequence/>
+						</DistinguishedName>
+						<ValiditySpecification>
+							<EarliestDate fixedness="ExactStartDate">
+								<GeneralisedTimeSimple dateTimeString=""/>
+							</EarliestDate>
+							<LatestDate fixedness="ExactEndDate">
+								<GeneralisedTimeSimple dateTimeString=""/>
+							</LatestDate>
+						</ValiditySpecification>
+						<SigningAlgorithmToBeUsedByCA>
+						
+<!--
+This describes the default signing algorithm that 
+should be used for the server certificate request.  
+The default example type is to use SHA1withRSA.  
+This should be used when creating a server 
+certificate using RSA encryption. 
+-->
+						
+							<SigningAlgorithm>
+								<OID oid ="1.2.840.113549.1.1.5" />
+							</SigningAlgorithm>
+							
+						</SigningAlgorithmToBeUsedByCA>
+					</CertificateRequestTemplate>
+					<CertificateRequestTemplate friendlyName="ClientCertRequestTemplate">
+						<DistinguishedName>
+							<RDNSequence/>
+						</DistinguishedName>
+						<ValiditySpecification>
+							<EarliestDate fixedness="ExactStartDate">
+								<GeneralisedTimeSimple dateTimeString=""/>
+							</EarliestDate>
+							<LatestDate fixedness="ExactEndDate">
+								<GeneralisedTimeSimple dateTimeString=""/>
+							</LatestDate>
+						</ValiditySpecification>
+						<SigningAlgorithmToBeUsedByCA>
+						
+<!--
+This describes the default signing algorithm that
+should be used for the client certificate request.
+The default example type is to use SHA1withRSA.  
+This should be used when creating a client 
+certificate using RSA encryption. 
+-->
+							<SigningAlgorithm>
+								<OID oid ="1.2.840.113549.1.1.5" />
+							</SigningAlgorithm>
+						
+						</SigningAlgorithmToBeUsedByCA>
+					</CertificateRequestTemplate>
+				</ListOfCertificateRequestTemplates>
+
+				<CredentialsInitialisationAndUpdateRules>
+					<InitialCycles>
+						<InitialCycle>
+							<PrivateKeySetup>
+<!--
+This describes the public/private key combination that should be used for
+server certificates.  The default example type is using a RSA algorithm with a
+key strength of 1024.  The signing algorithm to use with server certificates
+is denoted above in the "CertificateRequestTemplate" that has a friendly name
+denoted by "ServerCertRequestTemplate".  
+									
+The attribute keyBitLength can be modified to use a different length for the key.
+-->
+									
+								<CertificateRequestTemplateReference pointer="ServerCertRequestTemplate"/>
+								<KeyProperties>
+									<PolicyKeyValue>
+										
+										<PolicyRSAKeyValue>
+											<RSAKeyAllowedBitLength keyBitLength="1024"/>
+										</PolicyRSAKeyValue>
+
+									</PolicyKeyValue>
+									<KeyUsages>
+										<KeyUsage keyUsageValue="DigitalSignature"/>
+										<KeyUsage keyUsageValue="NonRepudiation"/>
+										<KeyUsage keyUsageValue="DataEncipherment"/>
+										<KeyUsage keyUsageValue="KeyEncipherment"/>
+										<KeyUsage keyUsageValue="CRLSigning"/>
+										<KeyUsage keyUsageValue="KeyAgreement"/>
+										<KeyUsage keyUsageValue="CertificateSigning"/>
+									</KeyUsages>
+								</KeyProperties>
+							</PrivateKeySetup>
+							<PrivateKeySetup>
+							
+<!--
+This describes the public/private key combination that should be used for
+client certificates.  The default example type is using a RSA algorithm with a 
+key strength of 1024.  The signing algorithm to use with client certificates
+is denoted above in the "CertificateRequestTemplate" that has a friendly name
+denoted by "ClientCertRequestTemplate".  
+									
+The attribute keyBitLength can be modified to use a different length for the key.
+-->
+
+								<CertificateRequestTemplateReference pointer="ClientCertRequestTemplate"/>
+								<KeyProperties>
+									<PolicyKeyValue>
+									
+										<PolicyRSAKeyValue>
+											<RSAKeyAllowedBitLength keyBitLength="1024"/>
+										</PolicyRSAKeyValue>
+									
+									</PolicyKeyValue>
+									<KeyUsages>
+										<KeyUsage keyUsageValue="DigitalSignature"/>
+										<KeyUsage keyUsageValue="NonRepudiation"/>
+										<KeyUsage keyUsageValue="DataEncipherment"/>
+										<KeyUsage keyUsageValue="KeyEncipherment"/>
+										<KeyUsage keyUsageValue="CRLSigning"/>
+										<KeyUsage keyUsageValue="KeyAgreement"/>
+										<KeyUsage keyUsageValue="CertificateSigning"/>
+									</KeyUsages>
+								</KeyProperties>
+							</PrivateKeySetup>
+						</InitialCycle>
+					</InitialCycles>
+				</CredentialsInitialisationAndUpdateRules>
+			</SecureUserCredentialsManagementRules>
+
+			<RemoteSecurityServicesLocatorRules/>
+				
+			<GenericSecurityServiceUsageRules>
+				<GenericSecurityServiceUsageRule>
+					<GenericSecurityServiceUsageBody>
+						<ConfidentialityServiceUsageRule>
+							<EncryptionServiceList/>
+							<DecryptionServiceList/>
+						</ConfidentialityServiceUsageRule>
+						<KeyWrappingServiceUsageRule>
+							<KeyWrappingAlgorithmList/>
+							<KeyUnwrappingAlgorithmList/>
+						</KeyWrappingServiceUsageRule>
+						<AuthenticationServiceUsageRule>
+							<EndEntityToAnotherEntity/>
+							<AnotherEntityToEndEntity/>
+						</AuthenticationServiceUsageRule>
+						<SigningServiceUsageRule>
+							<SigningAlgorithmsList>
+<!--
+This describes the default signing algorithm that 
+should be used to sign the certificate to test if
+the pkcs7 matches the primary key.  
+The default example type is to use SHA1withRSA.  
+This should be used when creating a server 
+certificate using RSA encryption. 
+-->
+								<SigningAlgorithm>
+									<OID oid="1.2.840.113549.1.1.5" />		
+								</SigningAlgorithm>
+							</SigningAlgorithmsList>
+							<VerifyingAlgorithmsList>
+								<SigningAlgorithm>
+<!--
+This describes the default signing algorithm that 
+should be used to sign the certificate to test if
+the pkcs7 matches the primary key.  
+The default example type is to use SHA1withRSA.  
+This should match the signing algorithm used
+above in the <SigningAlgorithmsList>
+-->
+									<OID oid="1.2.840.113549.1.1.5" />		
+								</SigningAlgorithm>
+							</VerifyingAlgorithmsList>
+						</SigningServiceUsageRule>
+					</GenericSecurityServiceUsageBody>
+				</GenericSecurityServiceUsageRule>
+			</GenericSecurityServiceUsageRules>
+				
+			<GenericExtensionsRules/>
+			<SignatureInfo>
+				<PKCS7Info/>
+			</SignatureInfo>
+		</PKIEnabledEntitiesPolicy>
+	</SecurityPolicy>
+</Policy>

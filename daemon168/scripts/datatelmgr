@@ -1,0 +1,539 @@
+#!/bin/ksh
+# Datatel Unix Service Management: datatelmgr
+# VERSION 2.3
+#
+# Who   When         What
+# ---   -----------  ------------
+# tlm   21-NOV-2005  2.0; Rewrite due to autoboot changes
+# fxg   07-DEC-2005  2.1; Added ClassPath mods
+# tlm   12-DEC-2005  2.2; Additional enhancements
+# mjw   29-JAN-2006  2.3; Added support for -server default
+# fxg   28-FEB-2006  2.4; Redirects the error message from the output stream to 
+#                         the error stream, so that SA-Valet could capture the message for better user feedback.
+#                         Some fix to make sure that the variable comparison more robust.
+# pxc   25-jan-2007  2.5; Stripping the backslash (if present) in front of the characters
+#                         :, =, !, #, \ from the JVMArguments and ListenerArguments of dmi.ini (needed because
+#                         Java's Propertie's store functionality introducses these backslashes
+# mjw   18-AUG-2007  2.6  added support to pipe system out and error to nohup.
+# pxc   22-may-2009  removed -x and added -r check for datatelenv_profile file
+# mwiaduck 7-march-2018  Added code to ignore whitespaces when parsing datateltab
+
+## Use a search/replace to turn on debug by changing all #echo DEBUG to
+# echo DEBUG (i.e. remove the pound sign); don't forget to turn it off after.
+
+
+## Usage: expecting up to three arguments
+# $1: CommandMode: start/stop              (required)
+# $2: ServiceName                          (optional)
+# $3: Optional parameters to execute       (optional)
+
+
+## Pupose:
+# This script will start DMI Listeners on behalf of the Datatel Daemon/SAValet
+# or by the Unix host on boot, or by the Unix sysadmin (where applicable).
+
+
+## Variables
+Dtab=/etc/datateltab
+Tempfile=/tmp/dmgr.workfile.$$   # use $$ to get the current PID as part of the filename to allow for concurrent execution
+StartLoc=`pwd`
+Mode=Listener
+Failed=0
+
+
+## Define Functions
+
+## File Validations
+# Tempfile is a scratch file, but if datatelmgr cannot remove it
+# for some reason, raise an error. Although it's only used by 'Boot' mode,
+# we'll check it each time rather than have it fail during a boot.
+
+FileValidations () {
+rm -f ${Tempfile} 2>/dev/null   # use -f to prevent prompting in non-interactive mode
+if [ -w ${Tempfile} ]
+then
+  echo "datatelmgr:error:unable to [re]use ${Tempfile}, check permissions." 1>&2
+  exit 1
+fi
+
+# Verify Dtab
+if [ ! -r ${Dtab} ]
+then
+  echo "datatelmgr:error:unable to read ${Dtab}, check permissions." 1>&2
+  exit 1
+fi
+}  # End FileValidations Function
+
+
+
+## Listener Validations
+
+ListenerValidations () {
+
+# echo DEBUG: Entering ListenerValidations
+# echo DEBUG: Evalutaing ${lname}
+
+# Service found?
+if [ `fgrep -c ":${lname}:" ${Dtab}` -eq "0" ]
+then
+  echo "datatelmgr:error:Service ${lname} not found in ${Dtab}." 1>&2
+  Failed=1
+fi
+
+# Duplicate services found?
+if [ $Failed = 0 ]
+then
+
+  # echo DEBUG: service found
+
+  if [ `fgrep -c ":${lname}:" ${Dtab}` -ge "2" ]
+  then
+    echo "datatelmgr:error:duplicate Service $lname found in ${Dtab}." 1>&2
+    echo "datatelmgr:error:Services must have unique names." 1>&2
+    Failed=1
+  fi
+fi
+
+
+# Valid service path?
+if [ $Failed = 0 ]
+then
+
+  # echo DEBUG: unique service found
+
+  if [ ! -d `fgrep ":${lname}:" ${Dtab} | cut -d":" -f3` ]   # be consistent with earlier checks
+  then
+    echo "datatelmgr:error:directory from ${Dtab} for service $lname not found." 1>&2
+    Failed=1
+  fi
+fi
+
+
+# Valid JRE path?
+if [ $Failed = 0 ]
+then
+
+  # echo DEBUG: service path found
+
+  if [ ! -d `fgrep ":${lname}:" ${Dtab} | cut -d":" -f4` ]   # be consistent with earlier checks
+  then
+    echo "datatelmgr:error:JRE in ${Dtab} for service $lname not found." 1>&2
+    Failed=1
+  fi
+fi
+
+# Assign ListenerPath (LPATH) and JVM (JPATH) from $Dtab
+if [ $Failed = 0 ]
+then
+
+  # echo DEBUG: JRE path found
+
+  LPATH=`fgrep ":${lname}:" ${Dtab} | tr -d '\040' | cut -d":" -f3`   # be consistent with earlier checks
+  JPATH=`fgrep ":${lname}:" ${Dtab} | tr -d '\040' | cut -d":" -f4`   # be consistent with earlier checks
+  # echo DEBUG: LPATH=${LPATH}, JPATH=${JPATH}
+
+fi
+
+#mjw adding check to see if OS is sun or Linux, then check to see if server exists
+#- get OS name
+isServer=0
+
+OS=`uname | cut -f1`
+echo $OS
+case $OS in
+  Linux|SunOS) 
+ if [ -d ${JPATH}/server ]
+ then
+   echo ${JPATH}/server is a directory
+   isServer=1
+ elif [ -d ${JPATH}/hotspot ]
+ then
+   echo ${JPATH}/hotspot is a directory
+   isServer=1
+ elif [ -d ${JPATH}/bin/server ]
+ then
+   echo ${JPATH}/bin/server is a directory
+   isServer=1
+ elif [ -d ${JPATH}/bin/hotspot ]
+ then
+   echo ${JPATH}/bin/hotspot is a directory
+   isServer=1
+ elif [ -d ${JPATH}/jre/bin/server ]
+ then
+   echo ${JPATH}/jre/bin/server
+   isServer=1
+ elif [ -d ${JPATH}/jre/bin/hotspot ]
+ then
+   echo ${JPATH}/jre/bin/server
+   isServer=1
+ fi
+    ;;
+  *)
+    ;;
+esac
+
+# Valid dmi.ini?
+
+if [ $Failed = 0 ]
+then
+  if [ ! -r ${LPATH}/dmi.ini ]
+  then
+    echo "datatelmgr:error:dmi.ini error, check permissions" 1>&2
+    Failed=1
+  fi
+fi
+
+
+# Valid dmilistener.jar?
+if [ $Failed = 0 ]
+then
+
+  # echo DEBUG: dmi.ini found
+
+  if [ ! -r ${LPATH}/dmilistener.jar ]
+  then
+    echo "datatelmgr:error:dmilistener.jar error, check permissions" 1>&2
+    Failed=1
+  fi
+fi
+
+
+if [ $Failed = 0 ]
+then
+
+  # echo DEBUG: dmlistener.jar found
+
+  # Only do these if we have not encountered validation errors..
+
+  # Yank JVMArguments from dmi.ini
+  # 04-NOV-2005 tlm:  SA-Valet sometimes puts a "^M" character at the
+  # end of the dmi.ini lines.  This control character, or the lack of it with
+  # nothing else on the line causes the 'null' tests to fail.
+  # Fixed for now by this double test.
+
+  JVMArgs=`grep JVMArguments ${LPATH}/dmi.ini | cut -d"=" -f2- | sed 's/;/ /g' | sed 's/\\\\:/:/g' | sed 's/\\\\=/=/g' | sed 's/\\\\!/!/g' | sed 's/\\\\#/#/g' | sed 's/\\\\\\\\/\\\\/g'`
+
+  # Set default if dmi.ini has nothing for JVMArguments
+  if [ -z "${JVMArgs}" ]
+  then
+    JVMArgs="-Xmx512m"
+  else
+    if [ `echo ${JVMArgs} | cut -c1` != "-" ]
+      then
+      JVMArgs="-Xmx512m"
+    fi
+  fi
+  
+  #mjw adding -server to JVM Args if path exists
+  if [ $isServer -eq 1 ]
+  then
+    JVMArgs="${JVMArgs} -server"
+  fi
+  
+  
+
+# Yank ClassPath from dmi.ini
+# Frank Guo adds the support for CLASSPATH
+# 
+# tlm 16-feb-2006, commenting this out for now
+
+  CPATH=`grep CLASSPATH ${LPATH}/dmi.ini | cut -d"=" -f2 | sed 's/;/:/g'`
+
+  if [ -z "$CPATH" ]
+      then
+
+      CPATH=dmilistener.jar
+
+ #  for jarfile in `ls -1 ${LPATH}/lib/*.jar 2>/dev/null`
+ #  do
+ #    CPATH=${CPATH}:${jarfile}
+ #  done
+ #  for jarfile in `ls -1 ${LPATH}/lib/*.zip 2>/dev/null`
+ #  do
+ #    CPATH=${CPATH}:${jarfile}
+ #  done
+ #  for jarfile in `ls -1 ${LPATH}/ext/*.jar 2>/dev/null`
+ #  do
+ #     CPATH=${CPATH}:${jarfile}
+ #   done
+  fi
+
+  MCLASS=com.datatel.server.listener.DMIServerListener
+
+  # Yank ListenerArguments from dmi.ini
+  ListenerArgs=`grep ListenerArguments ${LPATH}/dmi.ini | cut -d"=" -f2- | sed 's/;/ /g' | sed 's/\\\\:/:/g' | sed 's/\\\\=/=/g' | sed 's/\\\\!/!/g' | sed 's/\\\\#/#/g' | sed 's/\\\\\\\\/\\\\/g'`
+
+
+fi  # End If/then on Failed= test
+
+} # End ListenerValidations function
+
+
+## Define StartListener
+
+StartListener () {
+  cd $LPATH
+
+
+  rm -f ${LPATH}/startdmi   # if you do not delete it first, you might not own it, causing chmod to fail
+  echo $CMD > ${LPATH}/startdmi
+  chmod 775 ${LPATH}/startdmi
+  rm -f ${LPATH}/nohup.out 2>/dev/null
+  touch ${LPATH}/nohup.out
+
+        # stopdmi is a kill -9 command on a PID; some error checking might
+        # be prudent.
+        # Frank Guo adds the following check, making sure that the script exists before running.
+        if [ -x ${LPATH}/stopdmi ]
+        then
+          echo "DEBUG: datatelmgr stops the listener before starts ${lname}" >> ${LPATH}/nohup.out
+
+          ${LPATH}/stopdmi   # run the script directly in case previous cd cmd failed, do not suppress errors
+          stop_status=$?
+  
+          # We should remove stopdmi scripts so that it is not left containing
+          # a PID which is no longer associated with our listeners
+          rm -f ${LPATH}/stopdmi 2>/dev/null
+  
+          if [ ${stop_status} -ne "2" ]
+          then
+            echo "datatelmgr:success:no script errors"
+          else
+            echo "datatelmgr:failure:stopdmi script error for ${lname} in ${LPATH}"
+          fi
+  
+        fi
+
+  # 12-DEC-2005 tlm: Strange behavior reported from 'Boot' mode...The
+  # listeners are all started properly, but they do not use the
+  # right dmi.log or nohup.out, they all use the same one. Have not
+  # duplicated it yet, but this should help...
+
+  echo "DEBUG: datatelmgr started ${lname}" >> ${LPATH}/nohup.out
+  echo "DEBUG: datatelmgr started ${lname}" >> ${LPATH}/dmi.log
+
+  chmod 666 ${LPATH}/nohup.out
+  #MJW - adding support to pipe system out and error to nohup.
+  nohup ${CMD} <${LPATH}/nohup.out 1>${LPATH}/nohup.out 2>${LPATH}/nohup.out &
+  ourPID=$!
+
+  # 12-DEC-2005 tlm: The start function creates the stop script,
+  # but some error checking should be built-in to 'stop' to ensure the PID we
+  # captured is probably the PID we expect (before we execute a kill
+  # on it).  Single/double quotes used here.
+  # 28-02-2006 Frank Guo redirects the error message from the output stream to 
+  # the error stream, so that SA-Valet could capture the message for better user feedback.
+  # 2006.11.10 mjw we need to do a kill -15 to generate shutdown login in listener
+  #rm -f ${LPATH}/stopdmi   # if you do not delete it first, you might not own it, causing chmod to fail
+  echo "PIDcheck=\`ps -ef | grep ${ourPID} | grep java | grep -v grep | wc -l\`" > ${LPATH}/stopdmi
+  echo 'if [ ${PIDcheck} != 0 ]' >> ${LPATH}/stopdmi
+  echo "then"                    >> ${LPATH}/stopdmi
+  echo "  kill -15 ${ourPID}"     >> ${LPATH}/stopdmi
+  echo 'else'                    >> ${LPATH}/stopdmi
+  echo '  echo "stopdmi skipped, PID value is not a Java process. Probably the listener has been killed before."' >> ${LPATH}/stopdmi
+  echo '  exit 1'                >> ${LPATH}/stopdmi
+  echo "fi" >> ${LPATH}/stopdmi
+
+  chmod 755 ${LPATH}/stopdmi
+  cd $StartLoc
+  echo "datatelmgr:success:no script errors"
+}
+
+################################################################
+##                             Main                           ##
+################################################################
+
+
+## Usage: expecting up to three arguments
+# $1: CommandMode: start/stop              (required)
+# $2: ServiceName                          (optional)
+# $3: Optional parameters to execute       (optional)
+
+echo "DEBUG: received $# argument(s)"
+
+if [ $# = 0 ] || [ $# -ge 4 ]
+then
+  echo "datatelmgr:error:argument error." 1>&2
+  echo "datatelmgr:error:datatelmgr (start/stop) [ServiceName [optional parms]]." 1>&2
+  exit 1
+fi
+
+
+##Source /etc/datatelenv_profile to run the client's custom settings if any 
+# (ex. environment variables like LANG, LC_ALL, username setup, etc)
+if [ -f /etc/datatelenv_profile ] && [ -r /etc/datatelenv_profile ]
+then
+  echo "Executing Client settings in /etc/datatelenv_profile"
+  . /etc/datatelenv_profile
+fi
+
+
+## Determine operation Mode (Boot) or (Listener [with additional parameters])
+
+case $1 in
+  start|stop) ;;
+  *)
+  echo "datatelmgr:error:expecting start or stop for argument 1." 1>&2
+  echo "datatelmgr:error:received $1." 1>&2
+  exit 1
+esac
+
+if [ "$1" = "start" ] && [ $# = 1 ]
+  then
+  Mode=Boot
+fi
+
+if [ "$1" = "stop" ] && [ $# = 1 ]
+  then
+  Mode=Boot
+fi
+
+# Mode 'Boot' - start all listeners
+# Mode 'Listener' - start one listener
+
+
+case $Mode in
+  Boot)
+
+    # echo DEBUG: Boot mode: $1 all
+
+    # Yank lines of interest from ${Dtab}; field 4=Y and the daemon
+    # The deamon will always be started [first], regardless of Y/N flag
+    # create temp/scratch file
+
+    cat ${Dtab} | tr -d '\040' | egrep '^0:daemon:' > ${Tempfile}
+    cat ${Dtab} | tr -d '\040' | sort -k 1 | grep -v ":daemon:" | egrep '^[0-9]' | egrep '^.*:.*:.*:.*:Y' >> ${Tempfile}
+    chmod 666 ${Tempfile}
+
+    # echo DEBUG: Tempfile= ${Tempfile}...contents: ;cat $Tempfile; echo
+
+    if [ "$1" = "start" ]
+    then
+      for x in `cat ${Tempfile}`
+      do
+        lname=`echo $x | cut -d":" -f2`
+        ListenerValidations $lname
+
+        # echo DEBUG: Failed = $Failed
+
+        if [ $Failed = 0 ]
+        then
+          ## daemon has special requirements...
+	if [ -x ${JPATH}/bin/java ]
+	then
+          CMD="${JPATH}/bin/java ${JVMArgs} -cp ${CPATH} ${MCLASS} ${ListenerArgs}"
+        else
+          CMD="${JPATH}/java ${JVMArgs} -cp ${CPATH} ${MCLASS} ${ListenerArgs}"
+        fi
+
+
+          # echo DEBUG: command to execute is $CMD
+
+          StartListener
+        else
+          echo "datatelmgr:error:Skipping ${lname} due to errors"
+          Failed=0
+        fi
+      done
+    fi
+
+    if [ "$1" = "stop" ]
+    then
+      for x in `cat ${Tempfile}`
+      do
+        lname=`echo $x | cut -d":" -f2`
+        ListenerValidations $lname
+        cd $LPATH
+
+        # stopdmi is a kill -9 command on a PID; some error checking might
+        # be prudent.
+        # Frank Guo adds the following check, making sure that the script exists before running.
+        if [ ! -x ${LPATH}/stopdmi ]
+        then
+          echo "datatelmgr:error:missing script ${LPATH}/stopdmi or check permissions." 1>&2
+        else
+          ${LPATH}/stopdmi   # run the script directly in case previous cd cmd failed, do not suppress errors
+          stop_status=$?
+  
+          # We should remove stopdmi scripts so that it is not left containing
+          # a PID which is no longer associated with our listeners
+          rm -f ${LPATH}/stopdmi 2>/dev/null
+  
+          if [ ${stop_status} -ne "2" ]
+          then
+            echo "datatelmgr:success:no script errors"
+          else
+            echo "datatelmgr:failure:stopdmi script error for ${lname} in ${LPATH}"
+          fi
+  
+        fi
+
+        cd $StartLoc
+      done
+    fi
+  ;;  # End Boot mode
+
+  Listener)
+
+    # echo DEBUG: Listener Mode
+
+    # Shell functions do not seem to have direct access to
+    # command line arguments so we must assign those values
+    # to a var before calling...
+
+    lname=$2
+    lname=${lname//[[:blank:]]/}
+    FileValidations
+    ListenerValidations $lname
+    if [ $Failed != 0 ]
+    then
+      echo "datatelmgr:error:error starting $lname, see previous message"
+      exit 1
+    fi
+
+    if [ "$1" = "start" ]
+      then
+	if [ -x ${JPATH}/bin/java ]
+	then
+          CMD="${JPATH}/bin/java ${JVMArgs} -cp ${CPATH} ${MCLASS} ${ListenerArgs} -n${lname} $3"
+        else
+          CMD="${JPATH}/java ${JVMArgs} -cp ${CPATH} ${MCLASS} ${ListenerArgs} -n${lname} $3"
+        fi
+
+        echo DEBUG command to execute is $CMD
+
+        StartListener
+      exit 0
+    fi
+
+    if [ "$1" = "stop" ]
+    then
+      cd $LPATH
+      # Frank Guo adds the following check, making sure that the script exists before running.
+      if [ ! -x ${LPATH}/stopdmi ]
+      then
+        echo "datatelmgr:error:missing script ${LPATH}/stopdmi or check permissions." 1>&2
+	exit 1
+      else
+        ${LPATH}/stopdmi   # run the script directly in case previous cd cmd failed, do not suppress errors
+        stop_status=$?
+        
+        rm -f ${LPATH}/stopdmi 2>/dev/null
+        if [ ${stop_status} -ne "2" ]
+        then
+          echo "datatelmgr:success:no script errors"
+        else
+          echo "datatelmgr:failure:stopdmi script error for ${lname} in ${LPATH}"
+        fi
+  
+        cd $StartLoc
+        exit 0
+
+      fi
+    fi
+
+  ;;   # End 'Listener' mode
+esac # Case end
+
+## END
+

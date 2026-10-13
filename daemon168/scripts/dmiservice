@@ -1,0 +1,42 @@
+#!/bin/ksh
+# Datatel Unix Service Management: dmiservice
+# VERSION 2.3
+# Who   When         What
+# ---   -----------  ------------
+# fxg   14-JUN-2006  Frank Guo adopts Dave Mauck's fix here, create environment variable PATH
+# fxg   22-DEC-2005  create the first version for bootstrapping's purpose
+# pxc   22-may-2009  removed -x and added -r check for datatelenv_profile file
+
+export PATH=$PATH:/sbin:/usr/sbin:/bin:/usr/bin
+
+#USER=dmiadmin
+
+##Source /etc/datatelenv_profile to run the client's custom settings if any 
+# (ex. environment variables like LANG, LC_ALL, username setup, etc)
+if [ -f /etc/datatelenv_profile ] && [ -r /etc/datatelenv_profile ]
+then
+  echo "Executing Client settings in /etc/datatelenv_profile"
+  . /etc/datatelenv_profile
+fi
+
+
+lname=daemon
+Dtab=/etc/datateltab
+homedir=`fgrep ":${lname}:" ${Dtab} | cut -d":" -f3`
+case "$1" in
+  'start')
+	#su - ${USER} -c "/usr/local/bin/datatelmgr start"
+	su - ${USER} -c "${homedir}/scripts/datatelmgr start"
+	;;
+  'stop')
+	#su - ${USER} -c "/usr/local/bin/datatelmgr stop"
+	su - ${USER} -c "${homedir}/scripts/datatelmgr stop"
+	;;
+  '')
+	#su - ${USER} -c "/usr/local/bin/datatelmgr start"
+	su - ${USER} -c "${homedir}/scripts/datatelmgr start"
+	;;
+  *)
+	echo "Usage: dmiservice { start | stop }"
+	;;
+esac

@@ -1,0 +1,5 @@
+Created-By: Daemon Installshield (Ellucian Company, L.P.)
+Implementation-Title: Daemon
+Specification-Version: 1.6.8
+Implementation-Vendor: Ellucian Company, L.P.
+Copyright: 2025 by Ellucian Company, L.P. All rights reserved.

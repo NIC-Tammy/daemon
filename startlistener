@@ -1,2 +1,0 @@
-JRE="/usr/java1.5/java"
-$JRE -Xmx256m -cp dmilistener.jar com.datatel.server.listener.DMIServerListener  -pdatatel -ndaemon -dpassword

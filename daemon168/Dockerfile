@@ -6,7 +6,8 @@ WORKDIR /opt/ellucian/daemon
 
 COPY . .
 
-RUN chmod +x startlistener || true
+RUN chgrp -R 0 /opt/ellucian/daemon && \
+    chmod -R g=u /opt/ellucian/daemon
 
 USER 1001
 

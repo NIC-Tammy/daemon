@@ -13,9 +13,7 @@ RUN mkdir -p /opt/ellucian/test && \
     chgrp -R 0 /opt/ellucian/test && \
     chmod -R g+rwx /opt/ellucian/test
 
-RUN microdnf install -y \
-    ksh \
-    procps-ng && \
+RUN microdnf install -y procps-ng && \
     microdnf clean all
 
 USER 1001

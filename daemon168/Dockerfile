@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi9/openjdk-21-runtime
+FROM registry.access.redhat.com/ubi8/openjdk-8-runtime
 
 USER root
 

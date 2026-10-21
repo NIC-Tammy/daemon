@@ -13,7 +13,7 @@ RUN mkdir -p /opt/ellucian/test \
  && chgrp -R 0 /opt/ellucian/test \
  && chmod -R g+rwx /opt/ellucian/test
 
-USER 1001190000
+USER 1001
 
 EXPOSE 9090
 

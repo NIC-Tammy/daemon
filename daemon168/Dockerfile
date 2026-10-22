@@ -2,6 +2,12 @@ FROM registry.access.redhat.com/ubi8/openjdk-8-runtime
 
 USER root
 
+RUN microdnf install -y procps-ng && \
+    microdnf clean all
+
+RUN microdnf install -y ksh && \
+    microdnf clean all
+
 WORKDIR /opt/ellucian/daemon
 
 COPY . .
@@ -12,9 +18,6 @@ RUN chgrp -R 0 /opt/ellucian/daemon && \
 RUN mkdir -p /opt/ellucian/test && \
     chgrp -R 0 /opt/ellucian/test && \
     chmod -R g+rwx /opt/ellucian/test
-
-RUN microdnf install -y procps-ng && \
-    microdnf clean all
 
 USER 1001
 

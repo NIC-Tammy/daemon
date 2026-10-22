@@ -5,7 +5,8 @@ USER root
 RUN microdnf install -y procps-ng && \
     microdnf clean all
 
-RUN microdnf search ksh
+RUN microdnf repolist
+RUN rpm -qa | sort
 
 WORKDIR /opt/ellucian/daemon
 

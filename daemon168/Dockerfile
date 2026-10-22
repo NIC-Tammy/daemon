@@ -5,7 +5,7 @@ USER root
 RUN microdnf install -y procps-ng && \
     microdnf clean all
 
-RUN ln -s /bin/bash /usr/bin/ksh
+RUN ln -sf /bin/bash /usr/bin/ksh
 
 WORKDIR /opt/ellucian/daemon
 
@@ -15,8 +15,12 @@ RUN chgrp -R 0 /opt/ellucian/daemon && \
     chmod -R g=u /opt/ellucian/daemon
 
 RUN mkdir -p /opt/ellucian/test && \
-    chgrp -R 0 /opt/ellucian/test && \
-    chmod -R g+rwx /opt/ellucian/test
+    chgrp -R 0 /opt/ellucian && \
+    chmod -R g=u /opt/ellucian
+
+RUN touch /etc/datateltab && \
+    chgrp 0 /etc/datateltab && \
+    chmod g=u /etc/datateltab
 
 USER 1001
 

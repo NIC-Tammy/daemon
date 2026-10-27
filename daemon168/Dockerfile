@@ -22,6 +22,9 @@ RUN touch /etc/datateltab && \
     chgrp 0 /etc/datateltab && \
     chmod g=u /etc/datateltab
 
+RUN chmod +x /opt/ellucian/daemon/scripts/datatelmgr \
+    /opt/ellucian/daemon/scripts/dmiservice
+
 USER 1001
 
 EXPOSE 9090

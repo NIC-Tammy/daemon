@@ -14,7 +14,7 @@ COPY . .
 RUN chgrp -R 0 /opt/ellucian/daemon && \
     chmod -R g=u /opt/ellucian/daemon
 
-RUN mkdir -p /opt/ellucian/test && \
+RUN mkdir -p /opt/ellucian/test /opt/ellucian/tmp && \
     chgrp -R 0 /opt/ellucian && \
     chmod -R g=u /opt/ellucian
 

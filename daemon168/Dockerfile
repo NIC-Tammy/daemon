@@ -11,7 +11,8 @@ WORKDIR /opt/ellucian/daemon
 
 COPY . .
 
-RUN chgrp -R 0 /opt/ellucian/daemon && \
+RUN chmod 755 scripts/datatelmgr scripts/dmiservice && \
+    chgrp -R 0 /opt/ellucian/daemon && \
     chmod -R g=u /opt/ellucian/daemon
 
 RUN mkdir -p /opt/ellucian/test /opt/ellucian/tmp && \
@@ -24,7 +25,7 @@ RUN touch /etc/datateltab && \
 
 USER 1001
 
-EXPOSE 9090
+EXPOSE 9000
 
 CMD ["java", \
      "-Xmx512m", \
